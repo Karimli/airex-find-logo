@@ -1,12 +1,15 @@
 /**
- * Ən yaxşı nəticənin saxlanması (bölmə 2.5). `localStorage` əlçatmaz olsa da oyun işləyir.
- * Gələcəkdə server əlavə olunarsa: əvvəl buraya lokal yazılır, sonra outbox ilə göndərilir (bölmə 6.2).
+ * Ən yaxşı nəticənin və Google Sheets-ə göndərilməmiş nəticələrin (outbox) saxlanması (bölmə 2.5, 6.2).
+ * `localStorage` əlçatmaz olsa da oyun işləyir.
  * Angular-da: `@Injectable` StorageService.
  * @module core/storage
  */
 
 const APP_PREFIX = 'airex.findLogo.';
 const BEST_PREFIX = `${APP_PREFIX}best.`;
+const OUTBOX_KEY = `${APP_PREFIX}outbox`;
+/** Ən köhnələr silinir ki, localStorage limiti (≈5 MB) dolmasın */
+const MAX_OUTBOX = 10000;
 
 /**
  * @typedef {Object} BestResult
@@ -67,5 +70,39 @@ export function clearBest(mapId) {
     globalThis.localStorage?.removeItem(BEST_PREFIX + mapId);
   } catch {
     // localStorage əlçatmazdır — oyun yenə işləyir
+  }
+}
+
+/**
+ * @typedef {Object} OutboxItem  Google Sheets-ə hələ göndərilməmiş nəticə
+ * @property {string} id      Təkrar yazılmaması üçün unikal ID
+ * @property {number} at      Epoch ms
+ * @property {string} local   Kioskun yerli vaxtı: "dd.mm.yyyy - hh:mm:ss"
+ * @property {number} score   Tapılmış loqo sayı
+ * @property {number} ms      Oyun müddəti
+ * @property {string} map
+ */
+
+/** @returns {OutboxItem[]} */
+export function getOutbox() {
+  try {
+    const raw = globalThis.localStorage?.getItem(OUTBOX_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((item) => typeof item?.id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * @param {OutboxItem[]} items
+ * @returns {boolean}
+ */
+export function setOutbox(items) {
+  try {
+    globalThis.localStorage?.setItem(OUTBOX_KEY, JSON.stringify(items.slice(-MAX_OUTBOX)));
+    return true;
+  } catch {
+    return false;
   }
 }

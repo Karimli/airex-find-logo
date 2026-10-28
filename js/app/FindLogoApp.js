@@ -9,9 +9,10 @@
 
 import { preloadAll } from '../core/assets.js';
 import { prefersReducedMotion } from '../core/env.js';
-import { clearBest, getBest, isBetter, setBest } from '../core/storage.js';
+import { clearBest, getBest, getOutbox, isBetter, setBest } from '../core/storage.js';
+import { ResultSync, createId, fetchRemoteResults } from '../core/sync.js';
 import { onTap } from '../core/tap.js';
-import { Timer } from '../core/Timer.js';
+import { Timer, formatDateTime } from '../core/Timer.js';
 import { GameEngine } from '../game/GameEngine.js';
 import { HudView, formatCount } from '../game/HudView.js';
 import { MapView } from '../game/MapView.js';
@@ -27,6 +28,7 @@ const DEV_FIND_STEP_MS = 60;
  * @property {import('../config.js').MapConfig} map
  * @property {import('../config.js').Settings} settings
  * @property {Record<string, string>} uiAssets  `data-svg` açarı → SVG yolu
+ * @property {string} sheetsUrl  Google Sheets Web App URL (boş → yalnız lokal)
  * @property {boolean} devMode  true → GAME ekranına dev paneli əlavə olunur (bölmə 9.1)
  * @property {(state: ScreenState) => void} [onScreenChange]  Ekran dəyişəndə (məs. yeniləməni rules-da tətbiq etmək üçün)
  */
@@ -54,6 +56,8 @@ export class FindLogoApp {
   #timer = null;
   /** @type {DevPanel | null} */
   #dev = null;
+  /** @type {ResultSync | null} */
+  #sync = null;
   /** @type {ReturnType<typeof setInterval> | undefined} */
   #devFindInterval;
 
@@ -67,6 +71,8 @@ export class FindLogoApp {
   #idleTimeout;
   /** Hər yeni oyunda artır: köhnə oyunun gecikmiş callback-ləri işləmir */
   #gameId = 0;
+  /** Hər bitmiş oyunda artır: köhnə Sheets cavabı təzə rekordu əzməsin */
+  #completedCount = 0;
 
   /**
    * Konstruktorda side-effect yoxdur, başlatma `mount()` ilə edilir.
@@ -97,7 +103,12 @@ export class FindLogoApp {
     const svgs = await this.#loadAssets();
     this.#mountGame(svgs);
     if (this.options.devMode) this.#mountDevPanel();
+
+    this.#sync = new ResultSync(this.options.sheetsUrl);
+    this.#sync.mount();
+
     this.#renderBest();
+    this.#refreshBestFromSheets();
     this.show('rules');
     this.root.classList.remove('is-loading');
   }
@@ -132,7 +143,8 @@ export class FindLogoApp {
     this.#hud?.destroy();
     this.#map?.destroy();
     this.#timer?.destroy();
-    this.#engine = this.#hud = this.#map = this.#timer = null;
+    this.#sync?.destroy();
+    this.#engine = this.#hud = this.#map = this.#timer = this.#sync = null;
 
     this.#screens.clear();
     this.state = null;
@@ -210,6 +222,7 @@ export class FindLogoApp {
     switch (action) {
       case 'continue':
         this.#renderBest();
+        this.#refreshBestFromSheets();
         this.show('start');
         break;
       case 'start':
@@ -259,6 +272,11 @@ export class FindLogoApp {
     const previous = getBest(mapId);
     const isRecord = score > 0 && (previous == null || isBetter(result, previous));
     if (isRecord) setBest(mapId, result);
+    this.#completedCount++;
+
+    // Hər oyun Google Sheets-ə (internet yoxdursa növbədə gözləyir, sonra göndərilir)
+    const at = Date.now();
+    this.#sync?.queue({ id: createId(), at, local: formatDateTime(new Date(at)), score, ms: timeMs, map: mapId });
 
     if (reason === 'all' && this.#lastFoundAnimation) {
       await this.#lastFoundAnimation.finished.catch(() => {}); // reset zamanı cancel olunursa da davam edir
@@ -282,6 +300,33 @@ export class FindLogoApp {
     const total = this.#engine?.total ?? this.options.map.logos.length;
     const text = best ? formatCount(best.score, total) : `--/${String(total).padStart(2, '0')}`;
     for (const el of this.root.querySelectorAll('[data-best]')) el.textContent = text;
+  }
+
+  /**
+   * Ən yaxşı nəticəni Google Cədvəldən (+ bu cihazın hələ göndərilməmiş nəticələrindən) hesablayır,
+   * yerli yaddaşa yazır və göstərir. Beləcə bütün cihazlarda eyni olur; Cədvəl təmizlənibsə burada da sıfırlanır.
+   * İnternet yoxdursa heç nə dəyişmir — yerli dəyər qalır.
+   */
+  async #refreshBestFromSheets() {
+    const { sheetsUrl, map } = this.options;
+    if (!sheetsUrl) return;
+    const completedAtStart = this.#completedCount;
+    try {
+      const remote = await fetchRemoteResults(sheetsUrl);
+      if (completedAtStart !== this.#completedCount) return; // arada oyun bitib — onun nəticəsi daha təzədir
+      const all = [
+        ...remote.map((r) => ({ score: r.score, timeMs: r.ms, date: r.local })),
+        ...getOutbox().filter((item) => item.map === map.id).map((item) => ({ score: item.score, timeMs: item.ms, date: item.local })),
+      ];
+      /** @type {import('../core/storage.js').BestResult | null} */
+      let best = null;
+      for (const r of all) if (r.score > 0 && (best == null || isBetter(r, best))) best = r;
+      if (best) setBest(map.id, best);
+      else clearBest(map.id);
+      if (this.state !== 'game') this.#renderBest();
+    } catch {
+      // Sheets əlçatmazdır — yerli dəyər göstərilir
+    }
   }
 
   // ---------------------------------------------------------------- dev (bölmə 9.1)

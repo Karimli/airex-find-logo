@@ -1,13 +1,13 @@
 /**
  * Offline keş (bölmə 6.2). İlk açılışda (internet lazımdır) bütün fayllar keşə yazılır,
- * sonra sayt internetsiz də açılır. Strategiya: cache-first.
+ * sonra sayt internetsiz də açılır. Strategiya: cache-first. Google Sheets sorğularına toxunulmur.
  *
  * PRECACHE və VERSION əl ilə yazılmır: `node tools/update-sw.mjs` faylları tapıb bu bloku yeniləyir.
  * Fayllardan biri dəyişəndə VERSION da dəyişir → kiosk yeni versiyanı yükləyir, köhnə keş silinir.
  */
 
 // <precache> — tools/update-sw.mjs tərəfindən yaradılır, əl ilə dəyişməyin
-const VERSION = '32a682ee36d3';
+const VERSION = '4155e50c332d';
 const PRECACHE = [
   './assets/brand/airex-logo.svg',
   './assets/brand/logo-icon.svg',
@@ -34,6 +34,7 @@ const PRECACHE = [
   './js/core/env.js',
   './js/core/storage.js',
   './js/core/sw-register.js',
+  './js/core/sync.js',
   './js/core/tap.js',
   './js/game/DevPanel.js',
   './js/game/GameEngine.js',
@@ -75,7 +76,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin) return; // Google Sheets və s. — həmişə şəbəkə
 
   event.respondWith(fromCache(request));
 });

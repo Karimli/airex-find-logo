@@ -60,5 +60,11 @@ export const SETTINGS = {
   idleResetMs: 60000,
 };
 
+/**
+ * Google Sheets Apps Script Web App URL-i (`…/exec`), bax: tools/google-sheets/Code.gs.
+ * Boşdursa nəticələr yalnız bu cihazda (localStorage) saxlanılır.
+ */
+export const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwqoQyyZhQJX5jHaQjIM6Cz8SYHEfrqmLxz8CxAAuwlqX4dzBEpmnvybO79vzVh3DPN/exec';
+
 /** true → GAME ekranında dev paneli görünür. URL-də `?dev` də eyni effekti verir (bölmə 9.1). */
 export const DEBUG = false;

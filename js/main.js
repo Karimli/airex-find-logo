@@ -3,7 +3,7 @@
  * @module main
  */
 
-import { MAP_BAKU, SETTINGS, UI_ASSETS, DEBUG, EXPECTED_LOGO_COUNT } from './config.js';
+import { MAP_BAKU, SETTINGS, UI_ASSETS, SHEETS_URL, DEBUG, EXPECTED_LOGO_COUNT } from './config.js';
 import { FindLogoApp } from './app/FindLogoApp.js';
 import { findRoot, hasUrlFlag, reloadPage } from './core/env.js';
 import { registerServiceWorker } from './core/sw-register.js';
@@ -27,6 +27,7 @@ if (root) {
     map: MAP_BAKU,
     settings: SETTINGS,
     uiAssets: UI_ASSETS,
+    sheetsUrl: SHEETS_URL,
     devMode,
     onScreenChange: applyUpdateIfIdle,
   });
