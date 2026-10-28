@@ -1,0 +1,28 @@
+/* Dizayn tokenləri: rənglər, şrift, --u ölçü vahidi (bölmə 3.1, 3.2, 4) */
+
+:root {
+  /* Təsdiqlənmiş rənglər */
+  --c-accent:     #C7FF00; /* yaşıl: düymələr, tapılmış loqo, sayğac, vurğu */
+  --c-bg:         #262A37; /* əsas fon */
+  --c-text-muted: #C3C6C8; /* "FIND AIREX LOGO", "VAXT", "LOQOLARIN SAYI", "ƏN YAXŞI NƏTİCƏ" */
+  --c-text:       #FFFFFF; /* ağ */
+  --c-error:      #FB7232; /* bu oyunda istifadə olunmur, kit-də qalır */
+
+  /* Törəmə rənglər (yuxarıdakılardan) */
+  --c-accent-ink:  var(--c-bg);              /* yaşıl düymə üzərindəki mətn */
+  --c-divider:     rgb(195 198 200 / 0.2);   /* muted rəngin 20%-i */
+  --c-logo-hidden: rgb(255 255 255 / 0.55);  /* xəritədə gizli loqo */
+
+  /* Şrift. --font-display: XƏRİTƏ / NƏTİCƏ başlıqları — brend şrifti təsdiqlənənə qədər Inter (bölmə 3.2) */
+  --font-base:    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-base);
+}
+
+.cp-app {
+  /* 1 dizayn pikseli = konteynerə sığan ən kiçik nisbət.
+     cq vahidləri istifadə yerində (nəsillərdə) .cp-app konteynerinə görə hesablanır. */
+  --u: min(calc(100cqw / 1080), calc(100cqh / 1920));
+
+  font-family: var(--font-base);
+  color: var(--c-text);
+}

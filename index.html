@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>AIREX — Find AIREX Logo</title>
+  <link rel="icon" href="data:,">
+
+  <link rel="stylesheet" href="vendor/modern-normalize.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/game.css">
+
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="cp-app is-loading" data-cp-root>
+    <div class="cp-stage">
+
+      <header class="cp-header">
+        <span class="cp-header__logo" data-svg="logo" role="img" aria-label="AIREX"></span>
+        <span class="cp-header__brand">FIND AIREX LOGO</span>
+      </header>
+
+      <!-- 01 · RULES -->
+      <section class="cp-screen cp-screen--rules is-active" data-screen="rules">
+        <h1 class="cp-title cp-title--rules">
+          <span class="cp-title__accent">FIND AIREX LOGO</span><br>
+          OYUN QAYDALARI
+        </h1>
+
+        <ol class="cp-rules">
+          <li class="cp-rule">
+            <span class="cp-rule__num">1</span>
+            <p class="cp-rule__text">Xəritədə gizlədilmiş<br>AIREX loqolarını tap</p>
+            <span class="cp-rule__icon" data-svg="ruleSearch" aria-hidden="true"></span>
+          </li>
+          <li class="cp-rule">
+            <span class="cp-rule__num">2</span>
+            <p class="cp-rule__text">Loqonu tapan kimi toxun</p>
+            <span class="cp-rule__icon" data-svg="ruleTap" aria-hidden="true"></span>
+          </li>
+          <li class="cp-rule">
+            <span class="cp-rule__num">3</span>
+            <p class="cp-rule__text">2 dəqiqə ərzində mümkün<br>qədər çox loqo topla</p>
+            <span class="cp-rule__icon" data-svg="ruleTimer" aria-hidden="true"></span>
+          </li>
+        </ol>
+
+        <button class="cp-button" type="button" data-action="continue">DAVAM ET</button>
+      </section>
+
+      <!-- 02 · START -->
+      <section class="cp-screen cp-screen--start" data-screen="start">
+        <h1 class="cp-title">XƏRİTƏ</h1>
+
+        <img class="cp-start__image" data-map-image alt="Bakı xəritəsi">
+
+        <div class="cp-best">
+          <p class="cp-best__label">ƏN YAXŞI NƏTİCƏ:</p>
+          <p class="cp-best__value cp-num" data-best>--/30</p>
+        </div>
+
+        <button class="cp-button" type="button" data-action="start">BAŞLA</button>
+      </section>
+
+      <!-- 03–04 · GAME -->
+      <section class="cp-screen cp-screen--game" data-screen="game">
+        <h1 class="cp-title">XƏRİTƏ</h1>
+
+        <div class="cp-info">
+          <div class="cp-info__item">
+            <span class="cp-info__label">VAXT</span>
+            <span class="cp-info__value cp-num" data-time>00:00</span>
+          </div>
+          <div class="cp-info__item cp-info__item--count">
+            <span class="cp-info__label">LOQOLARIN SAYI</span>
+            <span class="cp-info__value cp-num" data-count>00/30</span>
+          </div>
+        </div>
+
+        <!-- MapView: xəritə şəkli + loqoların SVG overlay-i -->
+        <div class="cp-map" data-map>
+          <img class="cp-map__image" data-map-image alt="Bakı xəritəsi">
+        </div>
+
+        <p class="cp-hint">İkonları toplamaq üçün toxun.</p>
+      </section>
+
+      <!-- 05 · RESULT -->
+      <section class="cp-screen cp-screen--result" data-screen="result">
+        <h1 class="cp-title">NƏTİCƏ</h1>
+
+        <div class="cp-result">
+          <p class="cp-result__label">LOQOLARIN SAYI</p>
+          <p class="cp-result__score cp-num" data-result-score>00/30</p>
+          <p class="cp-result__record" data-record>YENİ REKORD!</p>
+          <div class="cp-best">
+            <p class="cp-best__label">ƏN YAXŞI NƏTİCƏ:</p>
+            <p class="cp-best__value cp-num" data-best>--/30</p>
+          </div>
+        </div>
+
+        <img class="cp-result__image" data-map-image alt="Bakı xəritəsi">
+
+        <button class="cp-button" type="button" data-action="restart">YENİDƏN OYNA</button>
+      </section>
+
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,166 @@
+/* GAME ekranı: info bloku (vaxt + sayğac), xəritə + loqo overlay-i, ipucu. */
+
+/* 9:16-da: xəritə y 493–1762, ipucu ≈24 aşağıda, altda ≈103 boşluq. Artıq hündürlük xəritənin üstünə düşür */
+.cp-screen--game {
+  padding-bottom: calc(103 * var(--u));
+}
+
+/* ---------- Info bloku ---------- */
+
+.cp-info {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  padding-top: calc(28 * var(--u));
+  line-height: 1;
+}
+
+.cp-info__item {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+}
+
+.cp-info__item--count {
+  align-items: flex-end;
+}
+
+.cp-info__label {
+  font-size: calc(22 * var(--u));
+  font-weight: 400;
+  color: var(--c-text-muted);
+}
+
+.cp-info__value {
+  font-size: calc(52 * var(--u));
+  font-weight: 700;
+}
+
+.cp-info__item--count .cp-info__value {
+  color: var(--c-accent);
+}
+
+/* ---------- Xəritə ---------- */
+
+.cp-map {
+  position: relative;
+  flex: none;
+  align-self: center;
+  width: calc(952 * var(--u));
+  aspect-ratio: 3 / 4;
+  margin-top: auto;
+  touch-action: none; /* pinch/pan yoxdur, toxunuş dərhal pointerup verir (bölmə 6.1) */
+}
+
+.cp-map__image {
+  width: 100%;
+  height: 100%;
+}
+
+/* Overlay şəkillə eyni ölçüdədir: viewBox = şəklin orijinal pikselləri */
+.cp-map__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+/* ---------- Loqolar: rəng yalnız buradan (SVG-də fill="currentColor") ---------- */
+
+.cp-logo {
+  color: var(--c-logo-hidden);
+  transform-box: fill-box;   /* pop animasiyası loqonun öz mərkəzindən */
+  transform-origin: center;
+}
+
+.cp-logo.is-found {
+  color: var(--c-accent);
+}
+
+/* ---------- İpucu ---------- */
+
+.cp-hint {
+  flex: none;
+  margin-top: calc(24 * var(--u));
+  font-size: calc(30 * var(--u));
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* ---------- Dev (yalnız DEBUG / ?dev, bölmə 9.1) ---------- */
+
+/* İpucunun altındakı boş zolaqda, xəritəni örtmür */
+.cp-dev {
+  position: absolute;
+  right: calc(64 * var(--u));
+  bottom: calc(20 * var(--u));
+  left: calc(64 * var(--u));
+  z-index: 100;
+  display: flex;
+  gap: calc(8 * var(--u));
+  height: calc(56 * var(--u));
+}
+
+.cp-dev__button {
+  flex: none;
+  padding: 0 calc(14 * var(--u));
+  border: calc(2 * var(--u)) dashed var(--c-accent);
+  background: var(--c-bg);
+  color: var(--c-accent);
+  font-size: calc(18 * var(--u));
+  font-weight: 700;
+}
+
+.cp-dev__button.is-active {
+  background: var(--c-accent);
+  color: var(--c-accent-ink);
+}
+
+.cp-dev__output {
+  flex: 1;
+  min-width: 0;
+  padding: 0 calc(12 * var(--u));
+  border: calc(2 * var(--u)) dashed var(--c-text-muted);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font: inherit;
+  font-size: calc(18 * var(--u));
+  font-variant-numeric: tabular-nums;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ZONALAR: toxunma dairələri + id, gizli loqolar daha görünən */
+.cp-map__zones {
+  pointer-events: none;
+}
+
+.cp-map__zones circle {
+  fill: var(--c-accent);
+  fill-opacity: 0.18;
+  stroke: var(--c-accent);
+  stroke-width: 1;
+}
+
+.cp-map__zones text {
+  fill: var(--c-text);
+  stroke: var(--c-bg);
+  stroke-width: 3;
+  paint-order: stroke;
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.cp-map.is-dev-zones .cp-logo:not(.is-found) {
+  color: var(--c-error);
+}
+
+/* YER SEÇİCİ: son toxunma nöqtəsi */
+.cp-map__pick {
+  fill: none;
+  stroke: var(--c-error);
+  stroke-width: 2;
+  pointer-events: none;
+}
