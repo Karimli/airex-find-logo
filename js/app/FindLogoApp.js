@@ -30,6 +30,7 @@ const DEV_FIND_STEP_MS = 60;
  * @property {Record<string, string>} uiAssets  `data-svg` açarı → SVG yolu
  * @property {string} sheetsUrl  Google Sheets Web App URL (boş → yalnız lokal)
  * @property {boolean} devMode  true → GAME ekranına dev paneli əlavə olunur (bölmə 9.1)
+ * @property {boolean} [designPreview]  MÜVƏQQƏTİ: yalnız statik GAME ekranı (URL-də `?preview`)
  * @property {(state: ScreenState) => void} [onScreenChange]  Ekran dəyişəndə (məs. yeniləməni rules-da tətbiq etmək üçün)
  */
 
@@ -92,6 +93,15 @@ export class FindLogoApp {
   async mount() {
     for (const el of this.root.querySelectorAll('[data-screen]')) {
       this.#screens.set(/** @type {ScreenState} */ (el.getAttribute('data-screen')), /** @type {HTMLElement} */ (el));
+    }
+
+    // MÜVƏQQƏTİ dizayn testi (URL-də `?preview`): yalnız GAME ekranı, heç bir listener/taymer/sinxron yoxdur.
+    // Engine başladılmır → xəritəyə toxunuş loqo tapmır.
+    if (this.options.designPreview) {
+      this.#mountGame(await this.#loadAssets());
+      this.show('game');
+      this.root.classList.remove('is-loading');
+      return;
     }
 
     this.#unbinders.push(onTap(this.root, '[data-action]', (target) => {
