@@ -68,6 +68,15 @@ export async function fetchRemoteResults(url) {
   }
 }
 
+/**
+ * Google Cədvəldəki bütün nəticələri silir.
+ * @param {string} url
+ * @returns {Promise<void>}  Uğursuz olsa xəta atılır
+ */
+export async function resetRemote(url) {
+  await post(url, { action: 'reset' });
+}
+
 export class ResultSync {
   #url;
   /** @type {Promise<void> | null} */

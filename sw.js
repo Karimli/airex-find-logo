@@ -7,7 +7,7 @@
  */
 
 // <precache> — tools/update-sw.mjs tərəfindən yaradılır, əl ilə dəyişməyin
-const VERSION = 'dd1036b63ba9';
+const VERSION = '9dc33324c00a';
 const PRECACHE = [
   './assets/brand/airex-logo.svg',
   './assets/brand/logo-icon.svg',
@@ -24,6 +24,7 @@ const PRECACHE = [
   './css/game.css',
   './css/layout.css',
   './css/reset.css',
+  './css/results.css',
   './css/tokens.css',
   './',
   './js/app/FindLogoApp.js',
@@ -44,6 +45,9 @@ const PRECACHE = [
   './js/game/hitTest.js',
   './js/main.js',
   './js/maps/baku/logos.js',
+  './js/results/ResultsPage.js',
+  './js/results/main.js',
+  './result/',
   './vendor/modern-normalize.css',
 ];
 // </precache>
@@ -78,19 +82,23 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // Google Sheets və s. — həmişə şəbəkə
 
-  event.respondWith(fromCache(request));
+  event.respondWith(fromCache(request, url));
 });
 
 /**
  * @param {Request} request
+ * @param {URL} url
  * @returns {Promise<Response>}
  */
-async function fromCache(request) {
+async function fromCache(request, url) {
   const cache = await caches.open(CACHE_NAME);
 
   // Səhifə açılışı: ?dev kimi parametrlər də keşdəki səhifəyə düşsün
   if (request.mode === 'navigate') {
-    const cached = await cache.match(new URL('./', self.registration.scope));
+    // /result → /result/ (GitHub Pages da belə edir): yoxsa səhifədəki ../css yolları alt qovluqda qırılır
+    if (url.pathname.endsWith('/result')) return Response.redirect(`${url.pathname}/${url.search}`, 301);
+    const page = /\/result\/(index\.html)?$/.test(url.pathname) ? './result/' : './';
+    const cached = await cache.match(new URL(page, self.registration.scope));
     if (cached) return cached;
   }
 

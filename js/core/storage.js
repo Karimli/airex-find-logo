@@ -1,5 +1,5 @@
 /**
- * Ən yaxşı nəticənin və Google Sheets-ə göndərilməmiş nəticələrin (outbox) saxlanması (bölmə 2.5, 6.2).
+ * Ən yaxşı nəticənin, oyunlar jurnalının və Google Sheets-ə göndərilməmiş nəticələrin (outbox) saxlanması (bölmə 2.5, 6.2).
  * `localStorage` əlçatmaz olsa da oyun işləyir.
  * Angular-da: `@Injectable` StorageService.
  * @module core/storage
@@ -7,9 +7,10 @@
 
 const APP_PREFIX = 'airex.findLogo.';
 const BEST_PREFIX = `${APP_PREFIX}best.`;
+const RESULTS_PREFIX = `${APP_PREFIX}results.`;
 const OUTBOX_KEY = `${APP_PREFIX}outbox`;
 /** Ən köhnələr silinir ki, localStorage limiti (≈5 MB) dolmasın */
-const MAX_OUTBOX = 10000;
+const MAX_ITEMS = 10000;
 
 /**
  * @typedef {Object} BestResult
@@ -74,6 +75,67 @@ export function clearBest(mapId) {
 }
 
 /**
+ * @typedef {Object} GameResult
+ * @property {number} at     Oyunun bitdiyi an (epoch ms)
+ * @property {number} score  Tapılmış loqo sayı
+ * @property {number} ms     Oyun müddəti
+ */
+
+/**
+ * Bu cihazda oynanmış oyunlar (/result səhifəsi Sheets əlçatmaz olanda bunu göstərir).
+ * @param {string} mapId
+ * @returns {GameResult[]}  Saxlanma sırası ilə (köhnədən yeniyə)
+ */
+export function getResults(mapId) {
+  try {
+    const raw = globalThis.localStorage?.getItem(RESULTS_PREFIX + mapId);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list)
+      ? list.filter((r) => Number.isFinite(r?.at) && Number.isInteger(r?.score) && Number.isFinite(r?.ms))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Bitmiş oyunu jurnala əlavə edir.
+ * @param {string} mapId
+ * @param {GameResult} result
+ * @returns {boolean}  Yazılıbsa true
+ */
+export function addResult(mapId, result) {
+  try {
+    const list = getResults(mapId);
+    list.push({ at: Math.round(result.at), score: result.score, ms: Math.round(result.ms) });
+    globalThis.localStorage?.setItem(RESULTS_PREFIX + mapId, JSON.stringify(list.slice(-MAX_ITEMS)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Oyunun bütün məlumatlarını silir (nəticələr, ən yaxşı nəticə, göndərilməmiş növbə). Başqa saytların açarlarına toxunmur.
+ * @returns {boolean}  Silinibsə true
+ */
+export function clearAllData() {
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage) return false;
+    const keys = [];
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key?.startsWith(APP_PREFIX)) keys.push(key);
+    }
+    for (const key of keys) storage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * @typedef {Object} OutboxItem  Google Sheets-ə hələ göndərilməmiş nəticə
  * @property {string} id      Təkrar yazılmaması üçün unikal ID
  * @property {number} at      Epoch ms
@@ -100,7 +162,7 @@ export function getOutbox() {
  */
 export function setOutbox(items) {
   try {
-    globalThis.localStorage?.setItem(OUTBOX_KEY, JSON.stringify(items.slice(-MAX_OUTBOX)));
+    globalThis.localStorage?.setItem(OUTBOX_KEY, JSON.stringify(items.slice(-MAX_ITEMS)));
     return true;
   } catch {
     return false;

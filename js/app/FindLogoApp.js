@@ -9,7 +9,7 @@
 
 import { preloadAll } from '../core/assets.js';
 import { prefersReducedMotion } from '../core/env.js';
-import { clearBest, getBest, getOutbox, isBetter, setBest } from '../core/storage.js';
+import { addResult, clearBest, getBest, getOutbox, isBetter, setBest } from '../core/storage.js';
 import { ResultSync, createId, fetchRemoteResults } from '../core/sync.js';
 import { onTap } from '../core/tap.js';
 import { Timer, formatDateTime } from '../core/Timer.js';
@@ -30,7 +30,6 @@ const DEV_FIND_STEP_MS = 60;
  * @property {Record<string, string>} uiAssets  `data-svg` açarı → SVG yolu
  * @property {string} sheetsUrl  Google Sheets Web App URL (boş → yalnız lokal)
  * @property {boolean} devMode  true → GAME ekranına dev paneli əlavə olunur (bölmə 9.1)
- * @property {boolean} [designPreview]  MÜVƏQQƏTİ: yalnız statik GAME ekranı (URL-də `?preview`)
  * @property {(state: ScreenState) => void} [onScreenChange]  Ekran dəyişəndə (məs. yeniləməni rules-da tətbiq etmək üçün)
  */
 
@@ -93,15 +92,6 @@ export class FindLogoApp {
   async mount() {
     for (const el of this.root.querySelectorAll('[data-screen]')) {
       this.#screens.set(/** @type {ScreenState} */ (el.getAttribute('data-screen')), /** @type {HTMLElement} */ (el));
-    }
-
-    // MÜVƏQQƏTİ dizayn testi (URL-də `?preview`): yalnız GAME ekranı, heç bir listener/taymer/sinxron yoxdur.
-    // Engine başladılmır → xəritəyə toxunuş loqo tapmır.
-    if (this.options.designPreview) {
-      this.#mountGame(await this.#loadAssets());
-      this.show('game');
-      this.root.classList.remove('is-loading');
-      return;
     }
 
     this.#unbinders.push(onTap(this.root, '[data-action]', (target) => {
@@ -286,6 +276,7 @@ export class FindLogoApp {
 
     // Hər oyun Google Sheets-ə (internet yoxdursa növbədə gözləyir, sonra göndərilir)
     const at = Date.now();
+    addResult(mapId, { at, score, ms: timeMs });
     this.#sync?.queue({ id: createId(), at, local: formatDateTime(new Date(at)), score, ms: timeMs, map: mapId });
 
     if (reason === 'all' && this.#lastFoundAnimation) {

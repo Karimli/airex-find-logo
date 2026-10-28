@@ -4,6 +4,7 @@
  * Kiosk hər bitmiş oyunu bu Web App-ə POST edir, nəticə "Nəticələr" vərəqinə yazılır.
  * Eyni nəticə iki dəfə gəlsə (internet kəsilib təkrar göndəriləndə), "tarix-saat + loqo + ms"-ə görə təkrar yazılmır.
  * Oyun hər açılışda GET ?action=list ilə nəticələri oxuyur → ən yaxşı nəticə bütün cihazlarda eynidir.
+ * /result səhifəsində SIFIRLA → { action: 'reset' } → başlıqdan başqa bütün sətirlər silinir.
  *
  * Quraşdırma: Extensions → Apps Script → bu kodu yapışdır → Deploy → New deployment → Web app
  *   Execute as: Me   ·   Who has access: Anyone
@@ -13,14 +14,17 @@ const SHEET_NAME = 'Nəticələr';
 const HEADERS = ['Tarix - saat', 'Loqo', 'Vaxt', 'Vaxt (ms)'];
 
 /**
- * Kioskdan gələn sorğu:
+ * Kioskdan gələn sorğular:
  *   { results: [{ id, at, local, score, ms, map }] }  → nəticələri yazır (id və map cədvələ yazılmır)
+ *   { action: 'reset' }                                → bütün nəticələri silir
  */
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (body.action === 'reset') return json_({ ok: true, cleared: clearResults_() });
+
     const incoming = Array.isArray(body.results) ? body.results : [];
     const sheet = getSheet_();
 
@@ -83,6 +87,17 @@ function readResults_() {
     .getValues()
     .map((r) => ({ local: String(r[0]), score: Number(r[1]), ms: Number(r[3]) }))
     .filter((r) => r.local && Number.isInteger(r.score) && r.score >= 0 && Number.isFinite(r.ms) && r.ms > 0);
+}
+
+/**
+ * Başlıq sətrindən başqa hər şeyi silir; silinən sətir sayını qaytarır.
+ * deleteRows yox, clearContent: dondurulmuş başlıqdan başqa bütün sətirləri silməyə Sheets icazə vermir.
+ */
+function clearResults_() {
+  const sheet = getSheet_();
+  const count = sheet.getLastRow() - 1;
+  if (count > 0) sheet.getRange(2, 1, count, sheet.getMaxColumns()).clearContent();
+  return Math.max(count, 0);
 }
 
 function getSheet_() {

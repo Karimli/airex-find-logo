@@ -3,7 +3,7 @@
  * sw.js-dəki PRECACHE siyahısını və VERSION-u yeniləyir.
  * Hər dəyişiklikdən sonra, push-dan əvvəl işlədin:  node tools/update-sw.mjs
  *
- * Siyahıya: index.html, css/, js/, vendor/, assets/ (lisenziya .txt faylları xaric).
+ * Siyahıya: index.html, result/, css/, js/, vendor/, assets/ (lisenziya .txt faylları xaric).
  * VERSION = bütün faylların məzmununun hash-i → fayl dəyişməyibsə versiya da dəyişmir.
  */
 
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIRS = ['css', 'js', 'vendor', 'assets'];
-const PAGES = { 'index.html': './' };
+const PAGES = { 'index.html': './', 'result/index.html': './result/' };
 const SKIP = (name) => name.startsWith('.') || name.endsWith('.txt');
 
 /** @param {string} dir */

@@ -1,0 +1,23 @@
+/**
+ * Nəticələr səhifəsinin bootstrap-ı (/result).
+ * Yollar `result/` qovluğuna nisbətəndir, ona görə asset yolu `../` ilə başlayır.
+ * @module results/main
+ */
+
+import { MAP_BAKU, SHEETS_URL, UI_ASSETS } from '../config.js';
+import { findRoot, reloadPage } from '../core/env.js';
+import { registerServiceWorker } from '../core/sw-register.js';
+import { ResultsPage } from './ResultsPage.js';
+
+const root = findRoot('[data-results-root]');
+
+if (root) {
+  const page = new ResultsPage(root, {
+    mapId: MAP_BAKU.id,
+    total: MAP_BAKU.logos.length,
+    logoUrl: `../${UI_ASSETS.logo}`,
+    sheetsUrl: SHEETS_URL,
+  });
+  page.mount().catch((error) => console.error('[FindLogo] Nəticələr səhifəsi açılmadı:', error));
+  registerServiceWorker({ url: '../sw.js', onUpdateReady: reloadPage });
+}

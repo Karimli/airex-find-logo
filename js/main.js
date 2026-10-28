@@ -29,8 +29,6 @@ if (root) {
     uiAssets: UI_ASSETS,
     sheetsUrl: SHEETS_URL,
     devMode,
-    // MÜVƏQQƏTİ dizayn testi: ?preview → yalnız statik GAME ekranı, heç bir action yoxdur
-    designPreview: hasUrlFlag('preview'),
     onScreenChange: applyUpdateIfIdle,
   });
   app.mount().catch((error) => console.error('[FindLogo] Assetlər yüklənmədi:', error));
