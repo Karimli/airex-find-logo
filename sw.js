@@ -7,7 +7,7 @@
  */
 
 // <precache> — tools/update-sw.mjs tərəfindən yaradılır, əl ilə dəyişməyin
-const VERSION = '160d98087383';
+const VERSION = '9dfd370da10d';
 const PRECACHE = [
   './assets/brand/airex-logo.svg',
   './assets/brand/logo-icon.svg',

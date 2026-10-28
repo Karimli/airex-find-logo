@@ -8,7 +8,7 @@
  */
 
 import { preloadAll } from '../core/assets.js';
-import { prefersReducedMotion } from '../core/env.js';
+import { isOnline, prefersReducedMotion } from '../core/env.js';
 import { addResult, clearBest, getBest, getOutbox, isBetter, setBest } from '../core/storage.js';
 import { ResultSync, createId, fetchRemoteResults } from '../core/sync.js';
 import { onTap } from '../core/tap.js';
@@ -17,6 +17,11 @@ import { GameEngine } from '../game/GameEngine.js';
 import { HudView, formatCount } from '../game/HudView.js';
 import { MapView } from '../game/MapView.js';
 import { DevPanel } from '../game/DevPanel.js';
+
+/** Açılışda Sheets-dən rekordu ən çox bu qədər gözləyirik, sonra yerli dəyər göstərilir */
+const BEST_WAIT_MS = 5000;
+/** Rekord Sheets-dən gələnə qədər göstərilən yer tutucu (köhnə yerli rekord görünməsin) */
+const BEST_PENDING_TEXT = '…';
 
 /** Dev "HAMISINI TAP": loqolar arası interval */
 const DEV_FIND_STEP_MS = 60;
@@ -73,6 +78,10 @@ export class FindLogoApp {
   #gameId = 0;
   /** Hər bitmiş oyunda artır: köhnə Sheets cavabı təzə rekordu əzməsin */
   #completedCount = 0;
+  /** Açılışda Sheets cavab verənə qədər true: "ƏN YAXŞI NƏTİCƏ" yerində `…` (köhnə yerli rekord görünmür) */
+  #bestPending = false;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  #bestPendingTimeout;
 
   /**
    * Konstruktorda side-effect yoxdur, başlatma `mount()` ilə edilir.
@@ -107,6 +116,10 @@ export class FindLogoApp {
     this.#sync = new ResultSync(this.options.sheetsUrl);
     this.#sync.mount();
 
+    if (this.options.sheetsUrl && isOnline()) {
+      this.#bestPending = true;
+      this.#bestPendingTimeout = setTimeout(() => this.#settleBest(), BEST_WAIT_MS);
+    }
     this.#renderBest();
     this.#refreshBestFromSheets();
     this.show('rules');
@@ -131,6 +144,7 @@ export class FindLogoApp {
   destroy() {
     clearTimeout(this.#resultTimeout);
     clearTimeout(this.#idleTimeout);
+    clearTimeout(this.#bestPendingTimeout);
     clearInterval(this.#devFindInterval);
     this.#dev?.destroy();
     this.#dev = null;
@@ -273,6 +287,7 @@ export class FindLogoApp {
     const isRecord = score > 0 && (previous == null || isBetter(result, previous));
     if (isRecord) setBest(mapId, result);
     this.#completedCount++;
+    this.#settleBest(false);
 
     // Hər oyun Google Sheets-ə (internet yoxdursa növbədə gözləyir, sonra göndərilir)
     const at = Date.now();
@@ -295,11 +310,14 @@ export class FindLogoApp {
 
   /**
    * "ƏN YAXŞI NƏTİCƏ" (start və result): yalnız loqo sayı, rekord yoxdursa `--/30`.
-   * @param {{ score: number } | null} [best]
+   * Açılışda Sheets cavab verənə qədər (yalnız dəyər verilməyəndə) `…`.
+   * @param {{ score: number } | null} [best]  Verilməsə storage-dan oxunur
    */
-  #renderBest(best = getBest(this.options.map.id)) {
+  #renderBest(best) {
     const total = this.#engine?.total ?? this.options.map.logos.length;
-    const text = best ? formatCount(best.score, total) : `--/${String(total).padStart(2, '0')}`;
+    const value = best === undefined ? getBest(this.options.map.id) : best;
+    const text = best === undefined && this.#bestPending ? BEST_PENDING_TEXT
+      : value ? formatCount(value.score, total) : `--/${String(total).padStart(2, '0')}`;
     for (const el of this.root.querySelectorAll('[data-best]')) el.textContent = text;
   }
 
@@ -324,10 +342,24 @@ export class FindLogoApp {
       for (const r of all) if (r.score > 0 && (best == null || isBetter(r, best))) best = r;
       if (best) setBest(map.id, best);
       else clearBest(map.id);
-      if (this.state !== 'game') this.#renderBest();
+      const wasPending = this.#bestPending;
+      this.#settleBest(false);
+      if (this.state !== 'game' || wasPending) this.#renderBest();
     } catch {
       // Sheets əlçatmazdır — yerli dəyər göstərilir
+      this.#settleBest();
     }
+  }
+
+  /**
+   * Gözləmə bitdi (cavab gəldi, xəta və ya `BEST_WAIT_MS`): bundan sonra yerli rekord göstərilir.
+   * @param {boolean} [render]  true → dərhal yenidən çək
+   */
+  #settleBest(render = true) {
+    clearTimeout(this.#bestPendingTimeout);
+    if (!this.#bestPending) return;
+    this.#bestPending = false;
+    if (render) this.#renderBest();
   }
 
   // ---------------------------------------------------------------- dev (bölmə 9.1)
